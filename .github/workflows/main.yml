@@ -7,28 +7,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Set up job
+      run: echo "Inicializando VM Ubuntu com interface gráfica..."
+
     - name: Instalar XFCE e XRDP
       run: |
         sudo apt update && sudo apt upgrade -y
-        sudo apt install -y xfce4 xfce4-goodies xrdp
+        sudo apt install -y xrdp xfce4 xfce4-goodies dbus-x11 x11-xserver-utils
 
-        # Criar novo usuário com senha fixa
-        sudo useradd -m joyzone
+        # Cria usuário joyzone com senha fixa
+        sudo useradd -m -s /bin/bash joyzone
         echo 'joyzone:joyzonetech' | sudo chpasswd
         sudo usermod -aG sudo joyzone
 
-        # Configurar sessão
+        # Configura sessão gráfica pro XRDP
         echo "xfce4-session" | sudo tee /home/joyzone/.xsession
         sudo chown joyzone:joyzone /home/joyzone/.xsession
 
-        # Adicionar usuário ao grupo do xrdp
-        sudo adduser joyzone ssl-cert
-
-        # Ativar XRDP
+        # Habilita XRDP no boot e reinicia o serviço
         sudo systemctl enable xrdp
         sudo systemctl restart xrdp
 
-    - name: Mostrar IP e instruções
+        # Libera a porta RDP no firewall (mesmo se não tiver firewall ativo)
+        sudo ufw allow 3389/tcp || true
+        sudo iptables -I INPUT -p tcp --dport 3389 -j ACCEPT || true
+
+    - name: Mostrar IP público e instruções
       run: |
         echo "IP público:"
         curl -s ifconfig.me
