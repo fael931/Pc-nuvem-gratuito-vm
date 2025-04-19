@@ -1,0 +1,38 @@
+name: ubuntu-gui
+
+on: [workflow_dispatch]
+
+jobs:
+  ubuntu-gui:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Instalar XFCE e XRDP
+      run: |
+        sudo apt update && sudo apt upgrade -y
+        sudo apt install -y xfce4 xfce4-goodies xrdp
+
+        # Criar novo usuário com senha fixa
+        sudo useradd -m joyzone
+        echo 'joyzone:joyzonetech' | sudo chpasswd
+        sudo usermod -aG sudo joyzone
+
+        # Configurar sessão
+        echo "xfce4-session" | sudo tee /home/joyzone/.xsession
+        sudo chown joyzone:joyzone /home/joyzone/.xsession
+
+        # Adicionar usuário ao grupo do xrdp
+        sudo adduser joyzone ssl-cert
+
+        # Ativar XRDP
+        sudo systemctl enable xrdp
+        sudo systemctl restart xrdp
+
+    - name: Mostrar IP e instruções
+      run: |
+        echo "IP público:"
+        curl -s ifconfig.me
+        echo ""
+        echo "Conecte com Remote Desktop (RDP)"
+        echo "Usuário: joyzone"
+        echo "Senha: joyzonetech"
